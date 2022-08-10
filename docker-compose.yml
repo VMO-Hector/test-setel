@@ -1,0 +1,75 @@
+version: '3.7'
+
+services:
+  db1:
+    image: "mysql:8.0.18"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "orders"
+    expose:
+      - 3306
+    volumes:
+      - ./docker:/docker-entrypoint-initdb.d
+
+  db2:
+    image: "mysql:8.0.18"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "payments"
+    expose:
+      - 3306
+    volumes:
+      - ./docker:/docker-entrypoint-initdb.d
+
+      
+
+  orders-service:
+    container_name: orders-service
+    build:
+      context: orders-service
+      dockerfile: Dockerfile
+    image: orders-service
+    command: npm run start:dev
+    volumes:
+      - ./orders-service:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - ${ORDERS_APP_PORT}:${ORDERS_APP_PORT}
+    restart: on-failure
+    depends_on:
+      - db1
+
+  payment-service:
+    container_name: payment-service
+    build:
+      context: payment-service
+      dockerfile: Dockerfile
+    image: payment-service
+    command: npm run start:dev
+    volumes:
+      - ./payment-service:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - ${PAYMENTS_APP_PORT}:${PAYMENTS_APP_PORT}
+    restart: on-failure
+    depends_on:
+      - db2
+
+  app-client:
+    container_name: app-client
+    build:
+      context: app-client
+      dockerfile: Dockerfile
+    image: app-client
+    command: npm run start
+    volumes:
+      - ./app-client:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - ${ORDERS_PORTAL_PORT}:${ORDERS_PORTAL_PORT}
+    restart: on-failure
+    depends_on:
+      - orders-service
+      - payment-service
