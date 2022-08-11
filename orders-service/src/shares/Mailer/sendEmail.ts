@@ -8,20 +8,18 @@ export class MailService {
 
   constructor() {
     this._transporter = nodemailer.createTransport({
-      host: "smtp.zoho.com",
-      port: 465,
+      host: 'smtp.gmail.com',
+      port: 587,
       secure: false,
       auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS,
       },
-      tls: {
-        rejectUnauthorized: false
-    }
+      requireTLS: true,
     });
   }
 
-  sendMail(subject: string, text: string, email: string): void {
+   sendMail(subject: string, text: string, email: string): void {
     const options = {
       from: process.env.EMAIL,
       to: email,
